@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:covid_tracker_1/HomePage.dart';
+import 'package:covid_tracker_1/search.dart';
+import 'package:covid_tracker_1/vaccine.dart';
 
-import 'HomePage.dart';
+import 'package:flutter/material.dart';
 
 void main() {
   runApp(MaterialApp(
