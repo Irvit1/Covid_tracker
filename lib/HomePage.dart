@@ -1,13 +1,20 @@
+import 'package:covid_tracker_1/FAQ.dart';
+import 'package:covid_tracker_1/Vaccine.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:bottom_navy_bar/bottom_navy_bar.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:fl_chart/fl_chart.dart';
 
+// ignore: camel_case_types
 class homepage extends StatefulWidget {
   @override
   _homepageState createState() => _homepageState();
 }
 
+// ignore: camel_case_types
 class _homepageState extends State<homepage> {
   Map indiadata;
   var uri = Uri.parse(
@@ -19,8 +26,23 @@ class _homepageState extends State<homepage> {
     });
   }
 
+  int _currentIndex = 0;
+  PageController _pageController;
+
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  
+  Widget homepage() {
     return Scaffold(
       // appBar: AppBar(
       //   centerTitle: true,
@@ -33,7 +55,7 @@ class _homepageState extends State<homepage> {
               ClipPath(
                 clipper: MyClipper(),
                 child: Container(
-                  height: 280,
+                  height: MediaQuery.of(context).size.height / 3,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -49,7 +71,7 @@ class _homepageState extends State<homepage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      SizedBox(height: 30),
+                      SizedBox(height: MediaQuery.of(context).size.height / 45),
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -58,12 +80,12 @@ class _homepageState extends State<homepage> {
                               padding: EdgeInsets.fromLTRB(30, 30, 30, 30),
                               child: Text(
                                 'Stay Home,\n    Stay Safe',
-                                style: TextStyle(
+                                style: TextStyle(fontWeight: FontWeight.bold,
                                     color: Colors.white, fontSize: 25),
                               ),
                             ),
                             Container(
-                              width: 210,
+                              width: MediaQuery.of(context).size.width / 2,
                               decoration: BoxDecoration(
                                 image: DecorationImage(
                                   fit: BoxFit.fitWidth,
@@ -81,13 +103,13 @@ class _homepageState extends State<homepage> {
                   ),
                 ),
               ),
-              SizedBox(height: 30),
+              SizedBox(height:MediaQuery.of(context).size.height / 45),
               Container(
                   child: Column(children: [
                 Text("INDIA",
                     style: GoogleFonts.lato(
                         fontSize: 30, fontWeight: FontWeight.bold)),
-                SizedBox(height: 10),
+                SizedBox(height: MediaQuery.of(context).size.height / 135),
                 GridView(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
@@ -120,14 +142,119 @@ class _homepageState extends State<homepage> {
                     ),
                   ],
                 ),
-              ]))
+              ])),
+              
+              Padding(
+                padding: const EdgeInsets.fromLTRB(5, 20, 5, 20),
+                child: SingleChildScrollView(
+                  child: Center(
+                    child: Container(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(0,15,20,20),
+                          child: LineChart(LineChartData(
+                              lineTouchData: LineTouchData(enabled: true),
+                              lineBarsData: [
+                                LineChartBarData(
+                                    spots: [
+                                      FlSpot(0, 0),
+                                      FlSpot(3, 8),
+                                      FlSpot(9, 2),
+                                      FlSpot(12, 3),
+                                    ],
+                                    isCurved: true,
+                                    colors: [Colors.green],
+                                    dotData: FlDotData(
+                                      show: false,
+                                    )),
+                                LineChartBarData(
+                                    spots: [
+                                      FlSpot(0, 0),
+                                      FlSpot(4, 1),
+                                      FlSpot(5, 1),
+                                      FlSpot(9, 3),
+                                    ],
+                                    isCurved: true,
+                                    colors: [Colors.red],
+                                    dotData: FlDotData(
+                                      show: false,
+                                    )),
+                                LineChartBarData(
+                                    spots: [
+                                      FlSpot(0, 0),
+                                      FlSpot(3, 0),
+                                      FlSpot(6, 1),
+                                      FlSpot(8, 3),
+                                    ],
+                                    isCurved: true,
+                                    colors: [Colors.black],
+                                    dotData: FlDotData(
+                                      show: false,
+                                    ))
+                              ])),
+                        ),
+                        height: 350,
+                        width: MediaQuery.of(context).size.width,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(40),
+                            color: Colors.blueGrey[50])),
+                  ),
+                ),
+              )
             ],
           ),
         ),
       ),
     );
   }
+  @override
+  Widget build(BuildContext context) {
+    final tab = <Widget>[
+      homepage(),
+      Vaccine(),
+      FAQ(),
+    ];
+
+    return Scaffold(
+      body: SizedBox.expand(
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() => _currentIndex = index);
+          },
+          children: <Widget>[
+            tab[_currentIndex],
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomNavyBar(
+        selectedIndex: _currentIndex,
+        showElevation: true,
+        onItemSelected: (index) => setState(() {
+          _currentIndex = index;
+          _pageController.animateToPage(index,
+              duration: Duration(milliseconds: 300), curve: Curves.ease);
+        }),
+        items: [
+          BottomNavyBarItem(
+            icon: Icon(Icons.home),
+            title: Text('Home'),
+            activeColor: Colors.redAccent,
+          ),
+          BottomNavyBarItem(
+              icon: FaIcon(FontAwesomeIcons.syringe),
+              title: Text('Vaccine'),
+              activeColor: Colors.greenAccent),
+          BottomNavyBarItem(
+              icon: Icon(Icons.book_rounded),
+              title: Text('FAQs'),
+              activeColor: Colors.blueAccent),
+        ],
+      ),
+    );
+  }
+
 }
+
 
 class MyClipper extends CustomClipper<Path> {
   @override
