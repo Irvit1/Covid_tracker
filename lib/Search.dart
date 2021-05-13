@@ -52,7 +52,15 @@ class _SearchState extends State<Search> {
         title: Text("Vaccination Centre"),
       ),
       body: vaccinedata == null
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Image(
+                image: new AssetImage("assets/loader.gif"),
+                height: MediaQuery.of(context).size.width / 2,
+                width: MediaQuery.of(context).size.width / 2,
+                colorBlendMode: BlendMode.softLight,
+                color: Color(0xff0d69ff).withOpacity(1.0),
+              ),
+            )
           : getBody(),
     );
   }
@@ -68,6 +76,7 @@ class _SearchState extends State<Search> {
             vaccinedata['centers'][index]['sessions'][0]['min_age_limit'];
         var vaccinename =
             vaccinedata['centers'][index]['sessions'][0]['vaccine'];
+        var address = vaccinedata['centers'][index]['address'];
 
         return Card(
           elevation: 1.5,
@@ -105,8 +114,18 @@ class _SearchState extends State<Search> {
                       SizedBox(
                         height: 10,
                       ),
+                      Container(
+                        width: MediaQuery.of(context).size.width - 140,
+                        child: Text(
+                          '$address',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
                       Text(
-                        'Availibily=$vaccinecount',
+                        'Availibilty:$vaccinecount',
                         style: TextStyle(color: Colors.grey),
                       ),
                       SizedBox(

@@ -1,5 +1,7 @@
 import 'package:covid_tracker_1/FAQ.dart';
 import 'package:covid_tracker_1/Vaccine.dart';
+import 'package:covid_tracker_1/services/covid.dart';
+import 'package:covid_tracker_1/services/linechart.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -16,14 +18,49 @@ class homepage extends StatefulWidget {
 
 // ignore: camel_case_types
 class _homepageState extends State<homepage> {
-  Map indiadata;
-  var uri = Uri.parse(
-      'https://corona.lmao.ninja/v3/covid-19/countries/India?strict=true');
+  List indiadata;
+  int x;
+  List recovered = [];
+  List deaths = [];
+  List activecases = [];
+
   getdata() async {
+    // final uri =
+    //     Uri.https('corona.lmao.ninja', '/v3/covid-19/countries/India', input);
+    final uri = Uri.https('api.covid19api.com', '/country/india');
     http.Response response = await http.get(uri);
     setState(() {
       indiadata = json.decode(response.body);
+      x = indiadata.length - 1;
+      print(indiadata);
     });
+  }
+
+  List<FlSpot> gatherRecovery() {
+    List<FlSpot> listData = [];
+    for (int i = 100; i < indiadata.length - 1; i++) {
+      listData.add(FlSpot(i * 1.0,
+          (indiadata[i + 1]['Recovered'] - indiadata[i]['Recovered']) * 1.0));
+    }
+    return listData;
+  }
+
+  List<FlSpot> gatherDeaths() {
+    List<FlSpot> listData1 = [];
+    for (int i = 100; i < indiadata.length - 1; i++) {
+      listData1.add(FlSpot(i * 1.0,
+          (indiadata[i + 1]['Deaths'] - indiadata[i]['Deaths']) * 1.0));
+    }
+    return listData1;
+  }
+
+  List<FlSpot> gatherConfirmed() {
+    List<FlSpot> listData2 = [];
+    for (int i = 100; i < indiadata.length - 1; i++) {
+      listData2.add(FlSpot(i * 1.0,
+          (indiadata[i + 1]['Confirmed'] - indiadata[i]['Confirmed']) * 1.0));
+    }
+    return listData2;
   }
 
   int _currentIndex = 0;
@@ -31,6 +68,7 @@ class _homepageState extends State<homepage> {
 
   @override
   void initState() {
+    getdata();
     super.initState();
     _pageController = PageController();
   }
@@ -41,171 +79,204 @@ class _homepageState extends State<homepage> {
     super.dispose();
   }
 
-  
   Widget homepage() {
     return Scaffold(
       // appBar: AppBar(
       //   centerTitle: true,
       //   title: Text("Covid-19 Tracker"),
       // ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              ClipPath(
-                clipper: MyClipper(),
-                child: Container(
-                  height: MediaQuery.of(context).size.height / 3,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: Alignment.topRight,
-                        end: Alignment.bottomLeft,
-                        colors: [
-                          Color(0xFF3383CD),
-                          Color(0xFF11249F),
-                        ]),
-                    image:
-                        DecorationImage(image: AssetImage("assets/virus.png")),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      SizedBox(height: MediaQuery.of(context).size.height / 45),
-                      Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+      body: indiadata == null
+          ? Center(
+              child: Image(
+                image: new AssetImage("assets/loader.gif"),
+                height: MediaQuery.of(context).size.width / 2,
+                width: MediaQuery.of(context).size.width / 2,
+                colorBlendMode: BlendMode.softLight,
+                color: Color(0xff0d69ff).withOpacity(1.0),
+              ),
+            )
+          : SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    ClipPath(
+                      clipper: MyClipper(),
+                      child: Container(
+                        height: MediaQuery.of(context).size.height / 3,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                              begin: Alignment.topRight,
+                              end: Alignment.bottomLeft,
+                              colors: [
+                                Color(0xFF3383CD),
+                                Color(0xFF11249F),
+                              ]),
+                          image: DecorationImage(
+                              image: AssetImage("assets/virus.png")),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(30, 30, 30, 30),
-                              child: Text(
-                                'Stay Home,\n    Stay Safe',
-                                style: TextStyle(fontWeight: FontWeight.bold,
-                                    color: Colors.white, fontSize: 25),
-                              ),
-                            ),
-                            Container(
-                              width: MediaQuery.of(context).size.width / 2,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  fit: BoxFit.fitWidth,
-                                  alignment: Alignment.topRight,
-                                  image: AssetImage("assets/person1.png"),
-                                ),
-                              ),
-                            ),
+                            SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height / 45),
+                            Expanded(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  Padding(
+                                    padding:
+                                        EdgeInsets.fromLTRB(30, 30, 30, 30),
+                                    child: Text(
+                                      'Stay Home,\n    Stay Safe',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontSize: 25),
+                                    ),
+                                  ),
+                                  Container(
+                                    width:
+                                        MediaQuery.of(context).size.width / 2,
+                                    decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                        fit: BoxFit.fitWidth,
+                                        alignment: Alignment.topRight,
+                                        image: AssetImage("assets/person1.png"),
+                                      ),
+                                    ),
+                                  ),
 
-                            // Image.asset("assets/person.png"),
+                                  // Image.asset("assets/person.png"),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height:MediaQuery.of(context).size.height / 45),
-              Container(
-                  child: Column(children: [
-                Text("INDIA",
-                    style: GoogleFonts.lato(
-                        fontSize: 30, fontWeight: FontWeight.bold)),
-                SizedBox(height: MediaQuery.of(context).size.height / 135),
-                GridView(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, childAspectRatio: 2),
-                  children: <Widget>[
-                    StatusPanel(
-                      title: 'CONFIRMED',
-                      panelColor: Colors.grey[400],
-                      textColor: Colors.grey[900],
-                      count: '100',
                     ),
-                    StatusPanel(
-                      title: 'ACTIVE',
-                      panelColor: Colors.blue[100],
-                      textColor: Colors.blue[900],
-                      count: '100',
-                    ),
-                    StatusPanel(
-                      title: 'RECOVERED',
-                      panelColor: Colors.green[100],
-                      textColor: Colors.green,
-                      count: '100',
-                    ),
-                    StatusPanel(
-                      title: 'DEATHS',
-                      panelColor: Colors.red[100],
-                      textColor: Colors.red,
-                      count: '10',
-                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height / 45),
+                    Container(
+                        child: Column(children: [
+                      Text("INDIA",
+                          style: GoogleFonts.lato(
+                              fontSize: 30, fontWeight: FontWeight.bold)),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height / 135),
+                      GridView(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2, childAspectRatio: 2),
+                        children: <Widget>[
+                          StatusPanel(
+                            title: 'NEW CASES',
+                            panelColor: Colors.grey[400],
+                            textColor: Colors.grey[900],
+                            count:
+                                '${indiadata[x]['Confirmed'] - indiadata[x - 1]['Confirmed']}',
+                          ),
+                          StatusPanel(
+                            title: 'RECOVERED TODAY',
+                            panelColor: Colors.green[100],
+                            textColor: Colors.green,
+                            count:
+                                '${indiadata[x]['Recovered'] - indiadata[x - 1]['Recovered']}',
+                          ),
+                          StatusPanel(
+                            title: 'ACTIVE',
+                            panelColor: Colors.blue[100],
+                            textColor: Colors.blue[900],
+                            count: '${indiadata[x]['Active']}',
+                          ),
+                          StatusPanel(
+                            title: 'DEATHS',
+                            panelColor: Colors.red[100],
+                            textColor: Colors.red,
+                            count:
+                                '${indiadata[x]['Deaths'] - indiadata[x - 1]['Deaths']}',
+                          ),
+                        ],
+                      ),
+                    ])),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(5, 20, 5, 20),
+                      child: SingleChildScrollView(
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Container(
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(10, 15, 20, 20),
+                                    child: LineChart(LineChartData(
+                                        minX: 100,
+                                        minY: 0,
+                                        gridData: FlGridData(show: false),
+                                        titlesData: FlTitlesData(
+                                          show: false,
+                                          leftTitles: SideTitles(
+                                            showTitles: true,
+                                          
+                                          ),
+                                        ),
+                                        lineTouchData: LineTouchData(enabled: true),
+                                        lineBarsData: [
+                                          LineChartBarData(
+                                              spots: gatherRecovery(),
+                                              isCurved: true,
+                                              colors: [Colors.green],
+                                              dotData: FlDotData(
+                                                show: false,
+                                              )),
+                                          LineChartBarData(
+                                              spots: gatherDeaths(),
+                                              isCurved: true,
+                                              colors: [Colors.red],
+                                              dotData: FlDotData(
+                                                show: false,
+                                              )),
+                                          LineChartBarData(
+                                              spots: gatherConfirmed(),
+                                              isCurved: true,
+                                              colors: [Colors.black],
+                                              dotData: FlDotData(
+                                                show: false,
+                                              ))
+                                        ])),
+                                  ),
+                                  height: 400,
+                                  width: MediaQuery.of(context).size.width,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(40),
+                                      color: Colors.blue[100])),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(17,10, 0, 0),
+                              child: Container(alignment: Alignment.topLeft,
+                                child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Recovered - Green', style: GoogleFonts.lato(color:Colors.green,fontSize: 17,fontWeight: FontWeight.bold)),SizedBox(height:5),
+                                    Text('Deaths - Red', style: GoogleFonts.lato(color:Colors.red,fontSize: 17,fontWeight: FontWeight.bold)),SizedBox(height:5),
+                                    Text('Confirmed - Black', style: GoogleFonts.lato(color:Colors.black,fontSize: 17,fontWeight: FontWeight.bold)),SizedBox(height:5),
+
+
+                                  ],
+                                ),
+                              ),
+                            )],
+                          ),
+                        ),
+                      ),
+                    )
                   ],
                 ),
-              ])),
-              
-              Padding(
-                padding: const EdgeInsets.fromLTRB(5, 20, 5, 20),
-                child: SingleChildScrollView(
-                  child: Center(
-                    child: Container(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(0,15,20,20),
-                          child: LineChart(LineChartData(
-                              lineTouchData: LineTouchData(enabled: true),
-                              lineBarsData: [
-                                LineChartBarData(
-                                    spots: [
-                                      FlSpot(0, 0),
-                                      FlSpot(3, 8),
-                                      FlSpot(9, 2),
-                                      FlSpot(12, 3),
-                                    ],
-                                    isCurved: true,
-                                    colors: [Colors.green],
-                                    dotData: FlDotData(
-                                      show: false,
-                                    )),
-                                LineChartBarData(
-                                    spots: [
-                                      FlSpot(0, 0),
-                                      FlSpot(4, 1),
-                                      FlSpot(5, 1),
-                                      FlSpot(9, 3),
-                                    ],
-                                    isCurved: true,
-                                    colors: [Colors.red],
-                                    dotData: FlDotData(
-                                      show: false,
-                                    )),
-                                LineChartBarData(
-                                    spots: [
-                                      FlSpot(0, 0),
-                                      FlSpot(3, 0),
-                                      FlSpot(6, 1),
-                                      FlSpot(8, 3),
-                                    ],
-                                    isCurved: true,
-                                    colors: [Colors.black],
-                                    dotData: FlDotData(
-                                      show: false,
-                                    ))
-                              ])),
-                        ),
-                        height: 350,
-                        width: MediaQuery.of(context).size.width,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(40),
-                            color: Colors.blueGrey[50])),
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
+              ),
+            ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final tab = <Widget>[
@@ -252,9 +323,7 @@ class _homepageState extends State<homepage> {
       ),
     );
   }
-
 }
-
 
 class MyClipper extends CustomClipper<Path> {
   @override
